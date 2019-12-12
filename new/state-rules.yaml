@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: state-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: up
+    rules:
+    - alert: 已监听job状态
+      expr: up == 0
+      for: 30s
+      labels:
+        severity: Erroring
+      annotations:
+        message: "{{$labels.job}}服务所在实例{{$labels.instance}}关闭"
+  - name: kube_pod_container_status_waiting_reason
+    rules:
+    - alert: pod等待状态错误原因
+      expr: kube_pod_container_status_waiting_reason{reason=~"ErrImagePull|CrashLoopBackOff|ImagePullBackOff"} > 0
+      for: 30s
+      labels:
+        severity: critical
+        reason: waiting
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}等待错误原因:{{$labels.reason}}"
+  - name: kube_pod_container_status_last_terminated_reason
+    rules:
+    - alert: pod容器内存不足
+      expr: kube_pod_container_status_last_terminated_reason{reason=~"OOMKilled"} > 0
+      for: 3s
+      labels:
+        severity: critical
+        reason: terminated
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}容器内存不足"
+  - name: kube_pod_container_status_terminated
+    rules:
+    - alert: pod移除
+      expr: kube_pod_container_status_terminated > 0
+      for: 0s
+      labels:
+        severity: critical
+        reason: waiting
+      annotations:
+        message: "{{$labels.namespace}}.{{$labels.pod}}容器移除"
+

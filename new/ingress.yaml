@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: prometheus-grafana-alertmanager
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required - root"
+spec:
+  rules:
+    - host: testk8s-prometheus.huisebug.org
+      http:
+        paths:
+          - backend:
+              serviceName: prometheus-k8s
+              servicePort: 9090
+            path: /
+    - host: testk8s-grafana.huisebug.org
+      http:
+        paths:
+          - backend:
+              serviceName: grafana
+              servicePort: 3000
+            path: /
+    - host: testk8s-alertmanager.huisebug.org
+      http:
+        paths:
+          - backend:
+              serviceName: alertmanager-main
+              servicePort: 9093
+            path: /
